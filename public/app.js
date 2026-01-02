@@ -42,7 +42,16 @@ socket.on('user-connected', async (userId) => {
     log('User connected:', userId);
     addDebug('User connected: ' + userId);
     updateStatus(`User ${userId.substring(0, 8)} connected`);
-    await createPeerConnection(userId, true);
+    
+    // Only the user with the "higher" socket ID initiates the connection
+    // This prevents both users from sending offers simultaneously
+    const shouldInitiate = socket.id > userId;
+    log('Should initiate:', shouldInitiate, 'myId:', socket.id, 'theirId:', userId);
+    addDebug('Initiator: ' + (shouldInitiate ? 'yes' : 'no'));
+    
+    if (shouldInitiate) {
+        await createPeerConnection(userId, true);
+    }
 });
 
 socket.on('user-disconnected', (userId) => {
@@ -222,7 +231,6 @@ async function createPeerConnection(userId, isInitiator) {
             videoElement.id = `video-${userId}`;
             videoElement.autoplay = true;
             videoElement.playsinline = true;
-            videoElement.muted = false;
             
             const label = document.createElement('div');
             label.className = 'video-label';
@@ -231,16 +239,13 @@ async function createPeerConnection(userId, isInitiator) {
             container.appendChild(videoElement);
             container.appendChild(label);
             remoteVideos.appendChild(container);
-        }
-        
-        if (event.streams && event.streams[0]) {
-            videoElement.srcObject = event.streams[0];
-            log('Set remote stream on video element');
             
-            videoElement.play().catch(e => {
-                log('Video play error:', e);
-                addDebug('Play error: ' + e.message);
-            });
+            // Only set srcObject once when creating the element
+            if (event.streams && event.streams[0]) {
+                videoElement.srcObject = event.streams[0];
+                log('Set remote stream on video element');
+                addDebug('Stream attached to video');
+            }
         }
     };
     
