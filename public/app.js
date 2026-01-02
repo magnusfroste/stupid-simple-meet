@@ -62,9 +62,9 @@ socket.on('user-disconnected', (userId) => {
         peerConnections[userId].close();
         delete peerConnections[userId];
     }
-    const videoElement = document.getElementById(`video-${userId}`);
-    if (videoElement) {
-        videoElement.parentElement.remove();
+    const container = document.getElementById(`container-${userId}`);
+    if (container) {
+        container.remove();
     }
 });
 
@@ -222,15 +222,26 @@ async function createPeerConnection(userId, isInitiator) {
         log('Received remote track:', event.track.kind, 'streams:', event.streams.length);
         addDebug('Got remote ' + event.track.kind + ' track');
         
+        if (!event.streams || !event.streams[0]) {
+            log('No streams in track event');
+            return;
+        }
+        
         let videoElement = document.getElementById(`video-${userId}`);
-        if (!videoElement) {
-            const container = document.createElement('div');
+        let container = document.getElementById(`container-${userId}`);
+        
+        if (!container) {
+            container = document.createElement('div');
+            container.id = `container-${userId}`;
             container.className = 'video-container';
             
             videoElement = document.createElement('video');
             videoElement.id = `video-${userId}`;
-            videoElement.autoplay = true;
-            videoElement.playsinline = true;
+            videoElement.setAttribute('autoplay', '');
+            videoElement.setAttribute('playsinline', '');
+            videoElement.setAttribute('webkit-playsinline', '');
+            videoElement.playsInline = true;
+            videoElement.muted = false;
             
             const label = document.createElement('div');
             label.className = 'video-label';
@@ -239,12 +250,30 @@ async function createPeerConnection(userId, isInitiator) {
             container.appendChild(videoElement);
             container.appendChild(label);
             remoteVideos.appendChild(container);
+        }
+        
+        // Always update srcObject when we get a new stream
+        const stream = event.streams[0];
+        if (videoElement.srcObject !== stream) {
+            videoElement.srcObject = stream;
+            log('Set remote stream on video element');
+            addDebug('Stream attached to video');
             
-            // Only set srcObject once when creating the element
-            if (event.streams && event.streams[0]) {
-                videoElement.srcObject = event.streams[0];
-                log('Set remote stream on video element');
-                addDebug('Stream attached to video');
+            // iOS requires explicit play() call after user interaction
+            const playPromise = videoElement.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    log('Video playing successfully');
+                    addDebug('Video playing');
+                }).catch(error => {
+                    log('Autoplay prevented:', error);
+                    addDebug('Tap video to play');
+                    // Add click handler for iOS
+                    videoElement.onclick = () => {
+                        videoElement.play();
+                        videoElement.onclick = null;
+                    };
+                });
             }
         }
     };
