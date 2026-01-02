@@ -89,20 +89,13 @@ body {
     position: absolute;
     inset: 0;
     display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
     gap: 8px;
     padding: 8px;
-    align-items: center;
-    justify-items: center;
-}
-
-/* 1 participant - full screen */
-.remote-videos:has(.video-container:only-child) {
-    grid-template-columns: 1fr;
-}
-
-.remote-videos:has(.video-container:only-child) .video-container {
-    width: 100%;
-    height: 100%;
+    padding-bottom: 100px;
+    align-items: stretch;
+    justify-items: stretch;
 }
 
 /* 2 participants - side by side */
@@ -127,8 +120,7 @@ body {
     background: #1a1a1a;
     border-radius: 8px;
     overflow: hidden;
-    width: 100%;
-    height: 100%;
+    min-height: 200px;
 }
 
 video {
