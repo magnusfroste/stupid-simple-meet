@@ -80,6 +80,12 @@ socket.on('user-disconnected', (userId) => {
     delete users[userId];
 });
 
+socket.on('user-info', (data) => {
+    log('Received user info:', data);
+    users[data.userId] = data.name;
+    updateUserLabels();
+});
+
 socket.on('offer', async (data) => {
     log('Received offer from:', data.from);
     try {
