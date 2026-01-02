@@ -114,6 +114,22 @@ video {
     font-size: 14px;
 }
 
+.debug-panel {
+    background: rgba(0, 0, 0, 0.8);
+    color: #0f0;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.debug-panel div {
+    margin: 2px 0;
+}
+
 @media (max-width: 768px) {
     h1 {
         font-size: 1.8rem;

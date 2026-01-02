@@ -1,9 +1,16 @@
 const socket = io();
 
+const DEBUG = true;
+function log(...args) {
+    if (DEBUG) console.log('[WebRTC]', new Date().toISOString(), ...args);
+}
+
 const config = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' }
     ]
 };
 
@@ -19,19 +26,29 @@ const toggleVideoBtn = document.getElementById('toggleVideo');
 const localVideo = document.getElementById('localVideo');
 const remoteVideos = document.getElementById('remoteVideos');
 const status = document.getElementById('status');
+const debugPanel = document.getElementById('debugPanel');
 
 connectBtn.addEventListener('click', connect);
 disconnectBtn.addEventListener('click', disconnect);
 toggleAudioBtn.addEventListener('click', toggleAudio);
 toggleVideoBtn.addEventListener('click', toggleVideo);
 
+socket.on('connect', () => {
+    log('Socket connected:', socket.id);
+    addDebug('Socket connected: ' + socket.id);
+});
+
 socket.on('user-connected', async (userId) => {
-    updateStatus(`Användare ${userId} anslöt`);
+    log('User connected:', userId);
+    addDebug('User connected: ' + userId);
+    updateStatus(`User ${userId.substring(0, 8)} connected`);
     await createPeerConnection(userId, true);
 });
 
 socket.on('user-disconnected', (userId) => {
-    updateStatus(`Användare ${userId} kopplade från`);
+    log('User disconnected:', userId);
+    addDebug('User disconnected: ' + userId);
+    updateStatus(`User ${userId.substring(0, 8)} disconnected`);
     if (peerConnections[userId]) {
         peerConnections[userId].close();
         delete peerConnections[userId];
@@ -43,29 +60,64 @@ socket.on('user-disconnected', (userId) => {
 });
 
 socket.on('offer', async (data) => {
-    await createPeerConnection(data.from, false);
-    await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.offer));
-    const answer = await peerConnections[data.from].createAnswer();
-    await peerConnections[data.from].setLocalDescription(answer);
-    socket.emit('answer', { to: data.from, answer });
-});
-
-socket.on('answer', async (data) => {
-    await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.answer));
-});
-
-socket.on('ice-candidate', async (data) => {
-    if (peerConnections[data.from]) {
-        await peerConnections[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+    log('Received offer from:', data.from);
+    addDebug('Received offer from: ' + data.from);
+    try {
+        await createPeerConnection(data.from, false);
+        await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnections[data.from].createAnswer();
+        await peerConnections[data.from].setLocalDescription(answer);
+        socket.emit('answer', { to: data.from, answer });
+        log('Sent answer to:', data.from);
+        addDebug('Sent answer to: ' + data.from);
+    } catch (error) {
+        log('Error handling offer:', error);
+        addDebug('ERROR offer: ' + error.message);
     }
 });
 
+socket.on('answer', async (data) => {
+    log('Received answer from:', data.from);
+    addDebug('Received answer from: ' + data.from);
+    try {
+        await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.answer));
+    } catch (error) {
+        log('Error handling answer:', error);
+        addDebug('ERROR answer: ' + error.message);
+    }
+});
+
+socket.on('ice-candidate', async (data) => {
+    log('Received ICE candidate from:', data.from);
+    if (peerConnections[data.from]) {
+        try {
+            await peerConnections[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (error) {
+            log('Error adding ICE candidate:', error);
+        }
+    }
+});
+
+function addDebug(message) {
+    if (debugPanel) {
+        const time = new Date().toLocaleTimeString();
+        debugPanel.innerHTML += `<div>[${time}] ${message}</div>`;
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
+}
+
 async function connect() {
     try {
+        log('Requesting media devices...');
+        addDebug('Requesting camera and microphone...');
+        
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true
+            video: { width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: { echoCancellation: true, noiseSuppression: true }
         });
+        
+        log('Got local stream:', localStream.getTracks().map(t => t.kind + ':' + t.enabled));
+        addDebug('Got stream: ' + localStream.getTracks().length + ' tracks');
         
         localVideo.srcObject = localStream;
         
@@ -76,10 +128,12 @@ async function connect() {
         toggleAudioBtn.disabled = false;
         toggleVideoBtn.disabled = false;
         
-        updateStatus('Ansluten! Väntar på andra användare...');
+        updateStatus('Connected! Waiting for other users...');
+        addDebug('Joined room, waiting for peers...');
     } catch (error) {
-        console.error('Error accessing media devices:', error);
-        updateStatus('Kunde inte få åtkomst till kamera/mikrofon');
+        log('Error accessing media devices:', error);
+        addDebug('ERROR: ' + error.message);
+        updateStatus('Could not access camera/microphone: ' + error.message);
     }
 }
 
@@ -102,7 +156,7 @@ function disconnect() {
     toggleAudioBtn.disabled = true;
     toggleVideoBtn.disabled = true;
     
-    updateStatus('Frånkopplad');
+    updateStatus('Disconnected');
 }
 
 function toggleAudio() {
@@ -111,7 +165,7 @@ function toggleAudio() {
         localStream.getAudioTracks().forEach(track => {
             track.enabled = isAudioEnabled;
         });
-        toggleAudioBtn.textContent = isAudioEnabled ? '🎤 Mikrofon På' : '🎤 Mikrofon Av';
+        toggleAudioBtn.textContent = isAudioEnabled ? '🎤 Mic On' : '🎤 Mic Off';
         toggleAudioBtn.style.background = isAudioEnabled ? 'white' : '#ef4444';
         toggleAudioBtn.style.color = isAudioEnabled ? '#333' : 'white';
     }
@@ -123,21 +177,42 @@ function toggleVideo() {
         localStream.getVideoTracks().forEach(track => {
             track.enabled = isVideoEnabled;
         });
-        toggleVideoBtn.textContent = isVideoEnabled ? '📹 Kamera På' : '📹 Kamera Av';
+        toggleVideoBtn.textContent = isVideoEnabled ? '📹 Cam On' : '📹 Cam Off';
         toggleVideoBtn.style.background = isVideoEnabled ? 'white' : '#ef4444';
         toggleVideoBtn.style.color = isVideoEnabled ? '#333' : 'white';
     }
 }
 
 async function createPeerConnection(userId, isInitiator) {
+    log('Creating peer connection for:', userId, 'isInitiator:', isInitiator);
+    addDebug('Creating connection to: ' + userId.substring(0, 8));
+    
     const peerConnection = new RTCPeerConnection(config);
     peerConnections[userId] = peerConnection;
     
+    peerConnection.onconnectionstatechange = () => {
+        log('Connection state:', peerConnection.connectionState, 'for:', userId);
+        addDebug('Connection: ' + peerConnection.connectionState);
+    };
+    
+    peerConnection.oniceconnectionstatechange = () => {
+        log('ICE state:', peerConnection.iceConnectionState, 'for:', userId);
+        addDebug('ICE: ' + peerConnection.iceConnectionState);
+    };
+    
+    peerConnection.onicegatheringstatechange = () => {
+        log('ICE gathering state:', peerConnection.iceGatheringState);
+    };
+    
     localStream.getTracks().forEach(track => {
+        log('Adding track:', track.kind, 'enabled:', track.enabled);
         peerConnection.addTrack(track, localStream);
     });
     
     peerConnection.ontrack = (event) => {
+        log('Received remote track:', event.track.kind, 'streams:', event.streams.length);
+        addDebug('Got remote ' + event.track.kind + ' track');
+        
         let videoElement = document.getElementById(`video-${userId}`);
         if (!videoElement) {
             const container = document.createElement('div');
@@ -147,28 +222,49 @@ async function createPeerConnection(userId, isInitiator) {
             videoElement.id = `video-${userId}`;
             videoElement.autoplay = true;
             videoElement.playsinline = true;
+            videoElement.muted = false;
             
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.textContent = `Användare ${userId.substring(0, 8)}`;
+            label.textContent = `User ${userId.substring(0, 8)}`;
             
             container.appendChild(videoElement);
             container.appendChild(label);
             remoteVideos.appendChild(container);
         }
-        videoElement.srcObject = event.streams[0];
+        
+        if (event.streams && event.streams[0]) {
+            videoElement.srcObject = event.streams[0];
+            log('Set remote stream on video element');
+            
+            videoElement.play().catch(e => {
+                log('Video play error:', e);
+                addDebug('Play error: ' + e.message);
+            });
+        }
     };
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
+            log('Sending ICE candidate to:', userId);
             socket.emit('ice-candidate', { to: userId, candidate: event.candidate });
         }
     };
     
     if (isInitiator) {
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('offer', { to: userId, offer });
+        try {
+            const offer = await peerConnection.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: true
+            });
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('offer', { to: userId, offer });
+            log('Sent offer to:', userId);
+            addDebug('Sent offer to: ' + userId.substring(0, 8));
+        } catch (error) {
+            log('Error creating offer:', error);
+            addDebug('ERROR creating offer: ' + error.message);
+        }
     }
 }
 
