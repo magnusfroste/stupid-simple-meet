@@ -3,7 +3,7 @@
 
 **Version:** 1.0  
 **Date:** January 2026  
-**Author:** Cascade AI Assistant  
+**Author:** Magnus Froste 
 
 ---
 

@@ -28,13 +28,14 @@ const localVideo = document.getElementById('localVideo');
 const remoteVideos = document.getElementById('remoteVideos');
 const status = document.getElementById('status');
 const localLabel = document.getElementById('localLabel');
-const debugPanel = document.getElementById('debugPanel');
 const setupOverlay = document.getElementById('setupOverlay');
 const meetingContainer = document.getElementById('meetingContainer');
+const selfView = document.getElementById('selfView');
 
 let userName = 'Anonymous';
 let users = {}; // Store user names
 let statusTimeout = null;
+let participantCount = 0;
 
 nameInput.addEventListener('input', (e) => {
     userName = e.target.value.trim() || 'Anonymous';
@@ -47,20 +48,27 @@ toggleVideoBtn.addEventListener('click', toggleVideo);
 
 socket.on('connect', () => {
     log('Socket connected:', socket.id);
-    addDebug('Socket connected: ' + socket.id);
 });
 
 socket.on('user-connected', async (userId) => {
     log('User connected:', userId);
-    addDebug('User connected: ' + userId);
-    updateStatus(`User connected`);
-    await createPeerConnection(userId, true);
+    participantCount++;
+    updateSelfViewMode();
+    
+    // Only the user with the "higher" socket ID initiates the connection
+    const shouldInitiate = socket.id > userId;
+    log('Should initiate:', shouldInitiate, 'myId:', socket.id, 'theirId:', userId);
+    
+    if (shouldInitiate) {
+        await createPeerConnection(userId, true);
+    }
 });
 
 socket.on('user-disconnected', (userId) => {
     log('User disconnected:', userId);
-    addDebug('User disconnected: ' + userId);
-    updateStatus(`User ${userId.substring(0, 8)} disconnected`);
+    participantCount = Math.max(0, participantCount - 1);
+    updateSelfViewMode();
+    
     if (peerConnections[userId]) {
         peerConnections[userId].close();
         delete peerConnections[userId];
@@ -69,11 +77,11 @@ socket.on('user-disconnected', (userId) => {
     if (container) {
         container.remove();
     }
+    delete users[userId];
 });
 
 socket.on('offer', async (data) => {
     log('Received offer from:', data.from);
-    addDebug('Received offer from: ' + data.from);
     try {
         await createPeerConnection(data.from, false);
         await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.offer));
@@ -81,21 +89,17 @@ socket.on('offer', async (data) => {
         await peerConnections[data.from].setLocalDescription(answer);
         socket.emit('answer', { to: data.from, answer });
         log('Sent answer to:', data.from);
-        addDebug('Sent answer to: ' + data.from);
     } catch (error) {
         log('Error handling offer:', error);
-        addDebug('ERROR offer: ' + error.message);
     }
 });
 
 socket.on('answer', async (data) => {
     log('Received answer from:', data.from);
-    addDebug('Received answer from: ' + data.from);
     try {
         await peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.answer));
     } catch (error) {
         log('Error handling answer:', error);
-        addDebug('ERROR answer: ' + error.message);
     }
 });
 
@@ -110,18 +114,17 @@ socket.on('ice-candidate', async (data) => {
     }
 });
 
-function addDebug(message) {
-    if (debugPanel) {
-        const time = new Date().toLocaleTimeString();
-        debugPanel.innerHTML += `<div>[${time}] ${message}</div>`;
-        debugPanel.scrollTop = debugPanel.scrollHeight;
+function updateSelfViewMode() {
+    if (participantCount > 0) {
+        selfView.classList.add('pip');
+    } else {
+        selfView.classList.remove('pip');
     }
 }
 
 async function connect() {
     try {
         log('Requesting media devices...');
-        addDebug('Requesting camera and microphone...');
         
         localStream = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 640 }, height: { ideal: 480 } },
@@ -129,7 +132,6 @@ async function connect() {
         });
         
         log('Got local stream:', localStream.getTracks().map(t => t.kind + ':' + t.enabled));
-        addDebug('Got stream: ' + localStream.getTracks().length + ' tracks');
         
         localVideo.srcObject = localStream;
         localLabel.textContent = userName;
@@ -137,6 +139,10 @@ async function connect() {
         // Hide setup, show meeting
         setupOverlay.style.display = 'none';
         meetingContainer.style.display = 'block';
+        
+        // Reset participant count and self-view mode
+        participantCount = 0;
+        updateSelfViewMode();
         
         socket.emit('join-room');
 
@@ -150,10 +156,8 @@ async function connect() {
         socket.emit('user-info', { name: userName });
         
         showStatus('Waiting for others to join...');
-        addDebug('Joined room, waiting for peers...');
     } catch (error) {
         log('Error accessing media devices:', error);
-        addDebug('ERROR: ' + error.message);
         alert('Could not access camera/microphone: ' + error.message);
     }
 }
@@ -223,19 +227,16 @@ function toggleVideo() {
 
 async function createPeerConnection(userId, isInitiator) {
     log('Creating peer connection for:', userId, 'isInitiator:', isInitiator);
-    addDebug('Creating connection to: ' + userId.substring(0, 8));
     
     const peerConnection = new RTCPeerConnection(config);
     peerConnections[userId] = peerConnection;
     
     peerConnection.onconnectionstatechange = () => {
         log('Connection state:', peerConnection.connectionState, 'for:', userId);
-        addDebug('Connection: ' + peerConnection.connectionState);
     };
     
     peerConnection.oniceconnectionstatechange = () => {
         log('ICE state:', peerConnection.iceConnectionState, 'for:', userId);
-        addDebug('ICE: ' + peerConnection.iceConnectionState);
     };
     
     peerConnection.onicegatheringstatechange = () => {
@@ -249,7 +250,6 @@ async function createPeerConnection(userId, isInitiator) {
     
     peerConnection.ontrack = (event) => {
         log('Received remote track:', event.track.kind, 'streams:', event.streams.length);
-        addDebug('Got remote ' + event.track.kind + ' track');
         
         if (!event.streams || !event.streams[0]) {
             log('No streams in track event');
@@ -274,7 +274,7 @@ async function createPeerConnection(userId, isInitiator) {
             
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.textContent = `User ${userId.substring(0, 8)}`;
+            label.textContent = users[userId] || `User ${userId.substring(0, 8)}`;
             
             container.appendChild(videoElement);
             container.appendChild(label);
@@ -286,17 +286,14 @@ async function createPeerConnection(userId, isInitiator) {
         if (videoElement.srcObject !== stream) {
             videoElement.srcObject = stream;
             log('Set remote stream on video element');
-            addDebug('Stream attached to video');
             
             // iOS requires explicit play() call after user interaction
             const playPromise = videoElement.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
                     log('Video playing successfully');
-                    addDebug('Video playing');
                 }).catch(error => {
                     log('Autoplay prevented:', error);
-                    addDebug('Tap video to play');
                     // Add click handler for iOS
                     videoElement.onclick = () => {
                         videoElement.play();
@@ -323,10 +320,8 @@ async function createPeerConnection(userId, isInitiator) {
             await peerConnection.setLocalDescription(offer);
             socket.emit('offer', { to: userId, offer });
             log('Sent offer to:', userId);
-            addDebug('Sent offer to: ' + userId.substring(0, 8));
         } catch (error) {
             log('Error creating offer:', error);
-            addDebug('ERROR creating offer: ' + error.message);
         }
     }
 }

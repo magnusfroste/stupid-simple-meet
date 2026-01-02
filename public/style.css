@@ -143,24 +143,27 @@ video {
     font-weight: 500;
 }
 
-/* Self-view PiP - Small corner view */
+/* Self-view - Full screen when waiting, PiP when others join */
 .self-view {
     position: fixed;
+    inset: 0;
+    z-index: 50;
+    transition: all 0.4s ease;
+}
+
+.self-view.pip {
+    inset: auto;
     bottom: 100px;
     right: 20px;
     width: 180px;
     height: 135px;
     border-radius: 12px;
-    overflow: hidden;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border: 2px solid rgba(255, 255, 255, 0.1);
-    z-index: 100;
-    transition: all 0.3s ease;
 }
 
-.self-view:hover {
+.self-view.pip:hover {
     transform: scale(1.05);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 .self-view video {
@@ -170,6 +173,19 @@ video {
 }
 
 .self-view .video-label {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.self-view.pip .video-label {
     bottom: 6px;
     left: 6px;
     font-size: 11px;
@@ -180,59 +196,59 @@ video {
 .controls-bar {
     position: fixed;
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 24px;
     display: flex;
     gap: 12px;
-    padding: 12px 20px;
-    background: rgba(30, 30, 30, 0.85);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    z-index: 100;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-}
-
-.controls-bar:hover {
-    opacity: 1;
+    z-index: 200;
 }
 
 .control-btn {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    font-size: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.control-btn svg {
+    width: 22px;
+    height: 22px;
 }
 
 .control-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.25);
     transform: scale(1.1);
 }
 
 .control-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
 .control-btn.active {
-    background: rgba(16, 185, 129, 0.3);
+    background: #30d158;
 }
 
 .control-btn.inactive {
-    background: rgba(239, 68, 68, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.control-btn.inactive svg {
+    opacity: 0.5;
+}
+
+.disconnect-btn {
+    background: #ff453a;
 }
 
 .disconnect-btn:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.3);
+    background: #ff6961;
 }
 
 /* Status Toast */
@@ -259,32 +275,10 @@ video {
     opacity: 1;
 }
 
-/* Debug Panel */
-.debug-panel {
-    position: fixed;
-    bottom: 100px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    color: #0f0;
-    font-family: monospace;
-    font-size: 11px;
-    padding: 8px;
-    border-radius: 8px;
-    max-height: 150px;
-    max-width: 300px;
-    overflow-y: auto;
-    z-index: 100;
-    opacity: 0.6;
-}
-
-.debug-panel div {
-    margin: 1px 0;
-}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-    .self-view {
+    .self-view.pip {
         width: 120px;
         height: 90px;
         bottom: 90px;
@@ -293,14 +287,18 @@ video {
     
     .controls-bar {
         bottom: 16px;
-        padding: 10px 16px;
+        right: 16px;
         gap: 8px;
     }
     
     .control-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .control-btn svg {
+        width: 20px;
+        height: 20px;
     }
     
     .remote-videos:has(.video-container:nth-child(n+5)) {
