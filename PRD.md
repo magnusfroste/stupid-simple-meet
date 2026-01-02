@@ -7,11 +7,11 @@
 
 ---
 
-## 1. Produktöversikt
+## 1. Product Overview
 
-Stupid Simple Conference är en webbaserad audio- och videokonferens applikation som möjliggör enkel, privat kommunikation mellan flera användare genom en enda knapptryckning. Applikationen använder WebRTC-teknologi för peer-to-peer kommunikation och kräver ingen registrering eller komplex konfiguration.
+Stupid-Simple-Meet is a web-based audio and video conference application that enables simple, private communication between multiple users with a single button press. The application uses WebRTC technology for peer-to-peer communication and requires no registration or complex configuration.
 
-**Målsättning:** Skapa en extremt användarvänlig konferenslösning där användare kan ansluta och kommunicera utan tekniska hinder.
+**Goal:** Create an extremely user-friendly conference solution where users can connect and communicate without technical barriers.
 
 ---
 
@@ -30,161 +30,161 @@ Many digital communication services have become overly complex, hindering quick 
 
 ---
 
-## 2. Målgrupp
+## 2. Target Audience
 
-- **Primär användare:** Privatpersoner och små grupper som behöver snabb, säker kommunikation
-- **Sekundär användare:** Små företag och team som vill ha en enkel konferenslösning utan prenumerationer
-- **Teknisk nivå:** Alla användarnivåer - från tekniskt ointresserade till utvecklare
+- **Primary Users:** Private individuals and small groups who need fast, secure communication
+- **Secondary Users:** Small businesses and teams who want a simple conference solution without subscriptions
+- **Technical Level:** All user levels - from technically uninterested to developers
 
-**Användarscenario:**
-- Familjemedlemmar som vill prata över avstånd
-- Vänner som vill ha en spontan videokonferens
-- Små team som behöver snabb kommunikation
-
----
-
-## 3. Funktionella Krav
-
-### 3.1 Grundläggande Funktioner
-
-- **FR-001:** Användare ska kunna ansluta till konferensen genom att klicka på en enda "Anslut"-knapp
-- **FR-002:** Applikationen ska automatiskt aktivera kamera och mikrofon vid anslutning
-- **FR-003:** Upp till 10 samtidiga användare ska kunna delta
-- **FR-004:** Alla anslutna användare ska se och höra varandra i realtid
-
-### 3.2 Media Kontroller
-
-- **FR-005:** Användare ska kunna stänga av/på sin mikrofon
-- **FR-006:** Användare ska kunna stänga av/på sin kamera
-- **FR-007:** Status för mikrofon/kamera ska visas visuellt
-
-### 3.3 Anslutningshantering
-
-- **FR-008:** Användare ska automatiskt upptäckas när de ansluter
-- **FR-009:** Användare ska få visuell feedback när andra ansluter/kopplar från
-- **FR-010:** Applikationen ska hantera nätverksproblem gracefult
+**User Scenarios:**
+- Family members who want to talk over distances
+- Friends who want to have a spontaneous video conference
+- Small teams who need quick communication
 
 ---
 
-## 4. Icke-Funktionella Krav
+## 3. Functional Requirements
 
-### 4.1 Prestanda
+### 3.1 Basic Functions
 
-- **NFR-001:** Latenstid ska vara < 500ms för audio/video
-- **NFR-002:** Applikationen ska starta inom 2 sekunder
-- **NFR-003:** Stöd för minst Chrome, Firefox, Safari, Edge
+- **FR-001:** Users should be able to connect to the conference by clicking a single "Connect" button
+- **FR-002:** The application should automatically activate camera and microphone upon connection
+- **FR-003:** Up to 10 simultaneous users should be able to participate
+- **FR-004:** All connected users should see and hear each other in real-time
 
-### 4.2 Säkerhet
+### 3.2 Media Controls
 
-- **NFR-004:** Ingen användardata ska lagras
-- **NFR-005:** Kommunikation ska vara peer-to-peer (ingen central server lagrar media)
-- **NFR-006:** HTTPS måste användas för WebRTC-kompatibilitet
+- **FR-005:** Users should be able to toggle their microphone on/off
+- **FR-006:** Users should be able to toggle their camera on/off
+- **FR-007:** Microphone/camera status should be displayed visually
 
-### 4.3 Tillgänglighet
+### 3.3 Connection Management
 
-- **NFR-007:** Applikationen ska vara responsiv på mobila enheter
-- **NFR-008:** Stöd för skärmläsare och tangentbordsnavigering
-
-### 4.4 Användbarhet
-
-- **NFR-009:** Enkel, intuitiv gränssnitt
-- **NFR-010:** Svenska som primärt språk
+- **FR-008:** Users should be automatically detected when they connect
+- **FR-009:** Users should receive visual feedback when others connect/disconnect
+- **FR-010:** The application should handle network issues gracefully
 
 ---
 
-## 5. Tekniska Specifikationer
+## 4. Non-Functional Requirements
 
-### 5.1 Arkitektur
+### 4.1 Performance
+
+- **NFR-001:** Latency should be < 500ms for audio/video
+- **NFR-002:** The application should start within 2 seconds
+- **NFR-003:** Support for at least Chrome, Firefox, Safari, Edge
+
+### 4.2 Security
+
+- **NFR-004:** No user data should be stored
+- **NFR-005:** Communication should be peer-to-peer (no central server stores media)
+- **NFR-006:** HTTPS must be used for WebRTC compatibility
+
+### 4.3 Accessibility
+
+- **NFR-007:** The application should be responsive on mobile devices
+- **NFR-008:** Support for screen readers and keyboard navigation
+
+### 4.4 Usability
+
+- **NFR-009:** Simple, intuitive interface
+- **NFR-010:** English as the primary language
+
+---
+
+## 5. Technical Specifications
+
+### 5.1 Architecture
 
 - **Frontend:** Vanilla JavaScript, HTML5, CSS3
-- **Backend:** Node.js med Express och Socket.IO
-- **WebRTC:** Peer-to-peer med STUN för NAT traversal
-- **Container:** Docker för enkel deployment
+- **Backend:** Node.js with Express and Socket.IO
+- **WebRTC:** Peer-to-peer with STUN for NAT traversal
+- **Container:** Docker for easy deployment
 
-### 5.2 Tekniska Beroenden
+### 5.2 Technical Dependencies
 
-- **WebRTC API:** För peer-to-peer kommunikation
-- **getUserMedia:** För kamera/mikrofon åtkomst
-- **Socket.IO:** För signaling
-- **Google STUN servers:** För NAT traversal
+- **WebRTC API:** For peer-to-peer communication
+- **getUserMedia:** For camera/microphone access
+- **Socket.IO:** For signaling
+- **Google STUN servers:** For NAT traversal
 
-### 5.3 Systemkrav
+### 5.3 System Requirements
 
 - **Server:** Node.js 18+
-- **Minne:** 512MB RAM minimum
-- **Bandbredd:** 1Mbps per användare rekommenderat
+- **Memory:** 512MB RAM minimum
+- **Bandwidth:** 1Mbps per user recommended
 
 ---
 
-## 6. Design och Användarupplevelse
+## 6. Design and User Experience
 
-### 6.1 Gränssnitt Design
+### 6.1 Interface Design
 
-- **Enkel layout:** Centrerad design med tydliga kontroller
-- **Färgpalett:** Modern gradient (blå till lila)
-- **Typografi:** Systemfonter för bred kompatibilitet
+- **Simple layout:** Centered design with clear controls
+- **Color palette:** Modern gradient (blue to purple)
+- **Typography:** System fonts for broad compatibility
 
-### 6.2 Användarflöde
+### 6.2 User Flow
 
-1. Användare öppnar applikationen
-2. Klickar "Anslut"
-3. Ger tillåtelse till kamera/mikrofon
-4. Ser sig själv och andra deltagare
-5. Kan kontrollera media med knappar
+1. User opens the application
+2. Clicks "Connect"
+3. Grants permission for camera and microphone
+4. Sees themselves and other participants
+5. Can control media with buttons
 
-### 6.3 Responsiv Design
+### 6.3 Responsive Design
 
-- **Desktop:** Grid-layout för flera videor
-- **Mobil:** Enkel kolumn-layout
-
----
-
-## 7. Risker och Beroenden
-
-### 7.1 Tekniska Risker
-
-- **WebRTC-kompatibilitet:** Alla webbläsare stödjer inte alla funktioner
-- **NAT/Firewall problem:** Vissa nätverk kan blockera P2P-trafik
-- **Bandbreddsbegränsningar:** Låg bandbredd påverkar kvalitet
-
-### 7.2 Affärsrisker
-
-- **Öppen källkod:** Konkurrens från andra gratis lösningar
-- **Säkerhet:** WebRTC kräver HTTPS, potentiella säkerhetshål
-
-### 7.3 Beroenden
-
-- **Externa tjänster:** Google STUN servers
-- **Webbläsare:** Uppdateringar kan påverka kompatibilitet
+- **Desktop:** Grid layout for multiple videos
+- **Mobile:** Simple column layout
 
 ---
 
-## 8. Milestones och Leveranser
+## 7. Risks and Dependencies
 
-### Fase 1: MVP (1 vecka)
-- Grundläggande WebRTC-funktionalitet
-- Enkel UI med anslutningsknapp
-- Docker-containerisering
+### 7.1 Technical Risks
 
-### Fase 2: Förbättringar (1 vecka)
-- Media-kontroller (mikrofon/kamera på/av)
-- Responsiv design
-- Dokumentation och licens
+- **WebRTC compatibility:** Not all browsers support all features
+- **NAT/Firewall issues:** Some networks may block P2P traffic
+- **Bandwidth limitations:** Low bandwidth affects quality
 
-### Fase 3: Produktionsberedelse (1 vecka)
-- HTTPS-konfiguration
-- Prestandaoptimering
-- Säkerhetsgranskning
+### 7.2 Business Risks
+
+- **Open source:** Competition from other free solutions
+- **Security:** WebRTC requires HTTPS, potential security vulnerabilities
+
+### 7.3 Dependencies
+
+- **External services:** Google STUN servers
+- **Browsers:** Updates may affect compatibility
 
 ---
 
-## 9. Acceptanskriterier
+## 8. Milestones and Deliverables
 
-- Användare kan ansluta med en knapptryckning
-- Audio/video fungerar mellan minst 3 användare
-- Applikationen fungerar på moderna webbläsare
-- Ingen personlig data lagras
-- Open source med MIT-licens
+### Phase 1: MVP (1 week)
+- Basic WebRTC functionality
+- Simple UI with connection button
+- Docker containerization
+
+### Phase 2: Improvements (1 week)
+- Media controls (microphone/camera on/off)
+- Responsive design
+- Documentation and licensing
+
+### Phase 3: Production Ready (1 week)
+- HTTPS configuration
+- Performance optimization
+- Security review
+
+---
+
+## 9. Acceptance Criteria
+
+- Users can connect with one button press
+- Audio/video works between at least 3 users
+- Application works on modern browsers
+- No personal data is stored
+- Open source with MIT license
 
 ---
 
