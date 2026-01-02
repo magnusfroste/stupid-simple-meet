@@ -29,13 +29,15 @@ const remoteVideos = document.getElementById('remoteVideos');
 const status = document.getElementById('status');
 const localLabel = document.getElementById('localLabel');
 const debugPanel = document.getElementById('debugPanel');
+const setupOverlay = document.getElementById('setupOverlay');
+const meetingContainer = document.getElementById('meetingContainer');
 
 let userName = 'Anonymous';
 let users = {}; // Store user names
+let statusTimeout = null;
 
 nameInput.addEventListener('input', (e) => {
     userName = e.target.value.trim() || 'Anonymous';
-    localLabel.textContent = userName;
 });
 
 connectBtn.addEventListener('click', connect);
@@ -130,23 +132,29 @@ async function connect() {
         addDebug('Got stream: ' + localStream.getTracks().length + ' tracks');
         
         localVideo.srcObject = localStream;
+        localLabel.textContent = userName;
+        
+        // Hide setup, show meeting
+        setupOverlay.style.display = 'none';
+        meetingContainer.style.display = 'block';
         
         socket.emit('join-room');
 
-        connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         toggleAudioBtn.disabled = false;
         toggleVideoBtn.disabled = false;
+        toggleAudioBtn.classList.add('active');
+        toggleVideoBtn.classList.add('active');
         
         // Send user info to other participants
         socket.emit('user-info', { name: userName });
         
-        updateStatus('Connected! Waiting for other users...');
+        showStatus('Waiting for others to join...');
         addDebug('Joined room, waiting for peers...');
     } catch (error) {
         log('Error accessing media devices:', error);
         addDebug('ERROR: ' + error.message);
-        updateStatus('Could not access camera/microphone: ' + error.message);
+        alert('Could not access camera/microphone: ' + error.message);
     }
 }
 
@@ -164,12 +172,15 @@ function disconnect() {
     
     socket.emit('leave-room');
     
-    connectBtn.disabled = false;
+    // Return to setup
+    meetingContainer.style.display = 'none';
+    setupOverlay.style.display = 'flex';
+    
     disconnectBtn.disabled = true;
     toggleAudioBtn.disabled = true;
     toggleVideoBtn.disabled = true;
     
-    updateStatus('Disconnected');
+    showStatus('Disconnected');
 }
 
 function toggleAudio() {
@@ -178,9 +189,16 @@ function toggleAudio() {
         localStream.getAudioTracks().forEach(track => {
             track.enabled = isAudioEnabled;
         });
-        toggleAudioBtn.textContent = isAudioEnabled ? '🎤 Mic On' : '🎤 Mic Off';
-        toggleAudioBtn.style.background = isAudioEnabled ? 'white' : '#ef4444';
-        toggleAudioBtn.style.color = isAudioEnabled ? '#333' : 'white';
+        
+        if (isAudioEnabled) {
+            toggleAudioBtn.classList.remove('inactive');
+            toggleAudioBtn.classList.add('active');
+        } else {
+            toggleAudioBtn.classList.remove('active');
+            toggleAudioBtn.classList.add('inactive');
+        }
+        
+        showStatus(isAudioEnabled ? 'Microphone on' : 'Microphone off');
     }
 }
 
@@ -190,9 +208,16 @@ function toggleVideo() {
         localStream.getVideoTracks().forEach(track => {
             track.enabled = isVideoEnabled;
         });
-        toggleVideoBtn.textContent = isVideoEnabled ? '📹 Cam On' : '📹 Cam Off';
-        toggleVideoBtn.style.background = isVideoEnabled ? 'white' : '#ef4444';
-        toggleVideoBtn.style.color = isVideoEnabled ? '#333' : 'white';
+        
+        if (isVideoEnabled) {
+            toggleVideoBtn.classList.remove('inactive');
+            toggleVideoBtn.classList.add('active');
+        } else {
+            toggleVideoBtn.classList.remove('active');
+            toggleVideoBtn.classList.add('inactive');
+        }
+        
+        showStatus(isVideoEnabled ? 'Camera on' : 'Camera off');
     }
 }
 
@@ -317,4 +342,18 @@ function updateUserLabels() {
             label.textContent = users[userId];
         }
     });
+}
+
+function showStatus(message) {
+    status.textContent = message;
+    status.classList.add('show');
+    
+    if (statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+        status.classList.remove('show');
+    }, 3000);
+}
+
+function updateStatus(message) {
+    showStatus(message);
 }

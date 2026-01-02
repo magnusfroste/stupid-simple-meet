@@ -7,30 +7,35 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Stupid-Simple-Meet</h1>
+    <div class="setup-overlay" id="setupOverlay">
+        <div class="setup-card">
+            <h1>Stupid-Simple-Meet</h1>
+            <input type="text" id="nameInput" placeholder="Your name" maxlength="20">
+            <button id="connectBtn" class="btn btn-primary">Join Meeting</button>
+        </div>
+    </div>
+
+    <div class="meeting-container" id="meetingContainer" style="display: none;">
+        <div id="remoteVideos" class="remote-videos"></div>
         
-        <div class="setup">
-            <input type="text" id="nameInput" placeholder="Enter your name" maxlength="20">
-        </div>
-        
-        <div class="controls">
-            <button id="connectBtn" class="btn btn-primary">Connect</button>
-            <button id="disconnectBtn" class="btn btn-secondary" disabled>Disconnect</button>
-            <button id="toggleAudio" class="btn" disabled>🎤 Mic On</button>
-            <button id="toggleVideo" class="btn" disabled>📹 Cam On</button>
+        <div class="self-view">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="video-label" id="localLabel">You</div>
         </div>
 
-        <div class="status" id="status">Click "Connect" to start</div>
-
-        <div class="videos">
-            <div class="video-container">
-                <video id="localVideo" autoplay muted playsinline></video>
-                <div class="video-label" id="localLabel">You</div>
-            </div>
-            <div id="remoteVideos"></div>
+        <div class="controls-bar">
+            <button id="toggleAudio" class="control-btn" disabled>
+                <span class="icon">🎤</span>
+            </button>
+            <button id="toggleVideo" class="control-btn" disabled>
+                <span class="icon">📹</span>
+            </button>
+            <button id="disconnectBtn" class="control-btn disconnect-btn" disabled>
+                <span class="icon">✕</span>
+            </button>
         </div>
 
+        <div class="status-toast" id="status"></div>
         <div id="debugPanel" class="debug-panel"></div>
     </div>
 
