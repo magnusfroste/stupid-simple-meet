@@ -16,11 +16,27 @@ body {
     margin: 0 auto;
 }
 
-h1 {
-    color: white;
+.setup {
+    margin-bottom: 20px;
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5rem;
+}
+
+.setup input {
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    background: white;
+    transition: border-color 0.3s ease;
+}
+
+.setup input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .controls {
@@ -83,8 +99,77 @@ h1 {
 
 .videos {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
+    padding: 10px;
+    min-height: 400px;
+    align-items: center;
+    justify-items: center;
+}
+
+/* 1 participant */
+.videos:has(.video-container:only-child) {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.videos:has(.video-container:only-child) .video-container {
+    width: 100%;
+    max-width: 800px;
+    height: 450px;
+}
+
+/* 2 participants */
+.videos:has(.video-container:nth-child(2):last-child) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+}
+
+.videos:has(.video-container:nth-child(2):last-child) .video-container {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+}
+
+/* 3 participants */
+.videos:has(.video-container:nth-child(3):last-child) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.videos:has(.video-container:nth-child(3):last-child) .video-container:nth-child(1) {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 600px;
+    height: 300px;
+}
+
+.videos:has(.video-container:nth-child(3):last-child) .video-container:not(:nth-child(1)) {
+    width: 100%;
+    max-width: 300px;
+    height: 200px;
+}
+
+/* 4 participants */
+.videos:has(.video-container:nth-child(4):last-child) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.videos:has(.video-container:nth-child(4):last-child) .video-container {
+    width: 100%;
+    max-width: 350px;
+    height: 250px;
+}
+
+/* 5+ participants */
+.videos:has(.video-container:nth-child(n+5)) {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-rows: auto;
+}
+
+.videos:has(.video-container:nth-child(n+5)) .video-container {
+    width: 100%;
+    height: 200px;
 }
 
 .video-container {

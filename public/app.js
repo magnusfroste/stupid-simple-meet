@@ -23,10 +23,20 @@ const connectBtn = document.getElementById('connectBtn');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const toggleAudioBtn = document.getElementById('toggleAudio');
 const toggleVideoBtn = document.getElementById('toggleVideo');
+const nameInput = document.getElementById('nameInput');
 const localVideo = document.getElementById('localVideo');
 const remoteVideos = document.getElementById('remoteVideos');
 const status = document.getElementById('status');
+const localLabel = document.getElementById('localLabel');
 const debugPanel = document.getElementById('debugPanel');
+
+let userName = 'Anonymous';
+let users = {}; // Store user names
+
+nameInput.addEventListener('input', (e) => {
+    userName = e.target.value.trim() || 'Anonymous';
+    localLabel.textContent = userName;
+});
 
 connectBtn.addEventListener('click', connect);
 disconnectBtn.addEventListener('click', disconnect);
@@ -41,17 +51,8 @@ socket.on('connect', () => {
 socket.on('user-connected', async (userId) => {
     log('User connected:', userId);
     addDebug('User connected: ' + userId);
-    updateStatus(`User ${userId.substring(0, 8)} connected`);
-    
-    // Only the user with the "higher" socket ID initiates the connection
-    // This prevents both users from sending offers simultaneously
-    const shouldInitiate = socket.id > userId;
-    log('Should initiate:', shouldInitiate, 'myId:', socket.id, 'theirId:', userId);
-    addDebug('Initiator: ' + (shouldInitiate ? 'yes' : 'no'));
-    
-    if (shouldInitiate) {
-        await createPeerConnection(userId, true);
-    }
+    updateStatus(`User connected`);
+    await createPeerConnection(userId, true);
 });
 
 socket.on('user-disconnected', (userId) => {
@@ -131,11 +132,14 @@ async function connect() {
         localVideo.srcObject = localStream;
         
         socket.emit('join-room');
-        
+
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         toggleAudioBtn.disabled = false;
         toggleVideoBtn.disabled = false;
+        
+        // Send user info to other participants
+        socket.emit('user-info', { name: userName });
         
         updateStatus('Connected! Waiting for other users...');
         addDebug('Joined room, waiting for peers...');
@@ -302,6 +306,15 @@ async function createPeerConnection(userId, isInitiator) {
     }
 }
 
-function updateStatus(message) {
-    status.textContent = message;
+function updateUserLabels() {
+    // Update local label
+    localLabel.textContent = userName;
+    
+    // Update remote user labels
+    Object.keys(users).forEach(userId => {
+        const label = document.querySelector(`#container-${userId} .video-label`);
+        if (label) {
+            label.textContent = users[userId];
+        }
+    });
 }

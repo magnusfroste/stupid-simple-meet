@@ -9,23 +9,41 @@ const io = socketIO(server);
 
 app.use(express.static('public'));
 
-const users = new Map();
+const users = new Map(); // userId -> { socket, name }
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
     
     socket.on('join-room', () => {
-        users.set(socket.id, socket);
+        // Set default name
+        users.set(socket.id, { socket, name: 'Anonymous' });
         
-        users.forEach((_, userId) => {
+        // Notify existing users about new user
+        users.forEach((userData, userId) => {
             if (userId !== socket.id) {
                 socket.emit('user-connected', userId);
-                io.to(userId).emit('user-connected', socket.id);
+                socket.emit('user-info', { userId, name: userData.name });
+                
+                userData.socket.emit('user-connected', socket.id);
+                userData.socket.emit('user-info', { userId: socket.id, name: users.get(socket.id).name });
             }
         });
         
         console.log('User joined room:', socket.id);
         console.log('Total users:', users.size);
+    });
+    
+    socket.on('user-info', (data) => {
+        if (users.has(socket.id)) {
+            users.get(socket.id).name = data.name;
+            
+            // Broadcast updated name to all other users
+            users.forEach((userData, userId) => {
+                if (userId !== socket.id) {
+                    userData.socket.emit('user-info', { userId: socket.id, name: data.name });
+                }
+            });
+        }
     });
     
     socket.on('offer', (data) => {
@@ -53,9 +71,12 @@ io.on('connection', (socket) => {
 function handleDisconnect(socketId) {
     if (users.has(socketId)) {
         users.delete(socketId);
-        users.forEach((_, userId) => {
+        
+        // Notify remaining users
+        users.forEach((userData, userId) => {
             io.to(userId).emit('user-disconnected', socketId);
         });
+        
         console.log('User left room:', socketId);
         console.log('Total users:', users.size);
     }
